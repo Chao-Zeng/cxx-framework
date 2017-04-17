@@ -3,8 +3,6 @@
 
 #include <string>
 
-
-
 namespace config {
 
 class Config

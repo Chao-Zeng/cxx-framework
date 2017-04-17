@@ -9,10 +9,10 @@
 
 namespace config {
 
-const std::string xml_ext = ".xml";
-const std::string json_ext = ".json";
-const std::string ini_ext = ".ini";
-const std::string info_ext = ".info";
+static const std::string xml_ext = ".xml";
+static const std::string json_ext = ".json";
+static const std::string ini_ext = ".ini";
+static const std::string info_ext = ".info";
 
 bool Config::load(const std::string& config_file)
 {
@@ -22,27 +22,37 @@ bool Config::load(const std::string& config_file)
 
     boost::property_tree::ptree ptree;
 
-    if (xml_ext == extension)
+    try
     {
-        boost::property_tree::read_xml(m_config_file, ptree);
+        if (xml_ext == extension)
+        {
+            boost::property_tree::read_xml(m_config_file, ptree);
+        }
+        else if (json_ext == extension)
+        {
+            boost::property_tree::read_json(m_config_file, ptree);
+        }
+        else if (ini_ext == extension)
+        {
+            boost::property_tree::read_ini(m_config_file, ptree);
+        }
+        else if (info_ext == extension)
+        {
+            boost::property_tree::read_info(m_config_file, ptree);
+        }
+        else
+        {
+            return false;
+        }
     }
-    else if (json_ext == extension)
-    {
-        boost::property_tree::read_json(m_config_file, ptree);
-    }
-    else if (ini_ext == extension)
-    {
-        boost::property_tree::read_ini(m_config_file, ptree);
-    }
-    else if (info_ext == extension)
-    {
-        boost::property_tree::read_info(m_config_file, ptree);
-    }
-    else
+    catch (const boost::property_tree::ptree_error &e)
     {
         return false;
     }
 
+    //float v = ptree.get("a.path.to.float.value", -1.f);
+
+    return true;
 }
 
 } //namespace config 

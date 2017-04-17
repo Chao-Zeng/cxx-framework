@@ -12,6 +12,7 @@
 #include <boost/log/sinks.hpp>
 #include <boost/log/utility/setup.hpp>
 #include <boost/log/support/date_time.hpp>
+#include <boost/filesystem.hpp>
 
 
 namespace logging = boost::log;
@@ -26,6 +27,7 @@ namespace logger {
 static const std::string log_file_name_suffix = "_%Y%m%d%H%M%S.log";
 static const size_t log_file_rotation_size = 1 * 1024 * 1024 * 1024; /**< log file rotation size 1G */
 //g++ -g -DBOOST_LOG_DYN_LINK -lboost_thread -lboost_system -lboost_log -lboost_log_setup -lpthread log.cpp -o log
+static const size_t record_queue_limit = 100000;
 
 static boost::shared_ptr< sinks::synchronous_sink< sinks::text_ostream_backend > > g_console_sink;
 
@@ -136,9 +138,16 @@ static void add_file_log(const std::string& log_file_name)
             keywords::time_based_rotation = sinks::file::rotation_at_time_point(12, 0, 0)
             );
 
+    //backend->auto_flush(true);
+
     // Wrap it into the frontend and register in the core.
-    // The backend requires synchronization in the frontend.
-    typedef sinks::synchronous_sink< sinks::text_file_backend > sink_t;
+    typedef sinks::asynchronous_sink<
+                    sinks::text_file_backend,
+                    sinks::bounded_fifo_queue<
+                            record_queue_limit,
+                            sinks::drop_on_overflow>
+            > sink_t;
+
     boost::shared_ptr< sink_t > sink(new sink_t(backend));
 
     sink->set_formatter
@@ -160,13 +169,13 @@ static void add_file_log(const std::string& log_file_name)
 }
 
 /**
- * @brief error log used to monitor, only output fatal log
- */
-static void add_error_log()
+    * @brief error log used to monitor, only output fatal log
+    */
+static void add_error_log(const std::string& log_file_name)
 {
     logging::add_file_log
         (
-            keywords::file_name = "error_%Y%m%d%H%M%S.log",
+            keywords::file_name = log_file_name + log_file_name_suffix,
             keywords::rotation_size = log_file_rotation_size,
             keywords::time_based_rotation = sinks::file::rotation_at_time_point(0, 0, 0),
             keywords::filter = severity == fatal,
@@ -182,8 +191,10 @@ void init_log(const std::string& log_file_name)
 
     open_console_log();
     add_file_log(log_file_name);
-    add_error_log();
+    boost::filesystem::path p(log_file_name);
+    std::string error_log_file = (p.parent_path()/="error").string();
+    add_error_log(error_log_file);
     set_log_level(info);
 }
 
-} //namespace logger 
+} //namespace logger
