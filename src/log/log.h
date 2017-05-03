@@ -40,6 +40,11 @@ void open_console_log();
  */
 void close_console_log();
 
+/**
+ * write log, client should not use this function
+ */
+void write_log(severity_level level, const char *format, ...);
+
 } //namespace logger 
 
 using logger::debug;
@@ -48,8 +53,16 @@ using logger::warn;
 using logger::error;
 using logger::fatal;
 
+/**
+ * c++ style log
+ */
 #define LOGGER(level) BOOST_LOG_SEV(logger::my_logger::get(), level)
 
 //#define LOG_DEBUG BOOST_LOG_SEV(logger::my_logger::get(), debug) << "[" << __FILE__ << ":" << __LINE__ << "]"
+
+/**
+ * c style log
+ */
+#define LOG(level, format, ...) logger::write_log(level, format, ##__VA_ARGS__)
 
 #endif //_LOG_H_

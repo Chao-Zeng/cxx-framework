@@ -1,5 +1,8 @@
 #include "log.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 #include <iostream>
 
 #include <boost/smart_ptr/shared_ptr.hpp>
@@ -195,6 +198,20 @@ void init_log(const std::string& log_file_name)
     std::string error_log_file = (p.parent_path()/="error").string();
     add_error_log(error_log_file);
     set_log_level(info);
+}
+
+#define MESSAGE_BUFFER_LENGTH 4096
+
+void write_log(severity_level level, const char *format, ...)
+{
+    static char message_buffer[MESSAGE_BUFFER_LENGTH];
+    memset(message_buffer, 0, MESSAGE_BUFFER_LENGTH);
+    va_list args;
+    va_start (args, format);
+    vsnprintf(message_buffer, MESSAGE_BUFFER_LENGTH, format, args);
+    va_end(args);
+
+    LOGGER(level) << message_buffer;
 }
 
 } //namespace logger
