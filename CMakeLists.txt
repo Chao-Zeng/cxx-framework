@@ -2,6 +2,15 @@ cmake_minimum_required(VERSION 2.8)
 
 project(cxx_framework)
 
+#version 1.0.0
+set(VERSION_MAJOR 1)
+set(VERSION_MINOR 0)
+set(VERSION_PATCH 0)
+
+configure_file("${PROJECT_SOURCE_DIR}/version.h.in"
+               "${PROJECT_BINARY_DIR}/version.h")
+include_directories("${PROJECT_BINARY_DIR}")
+
 #make VERBOSE=1
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
