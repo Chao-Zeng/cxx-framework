@@ -31,12 +31,72 @@ bool GetOption::parseOption()
             {"config", required_argument, 0, 'c'},
             {0, 0, 0, 0}
         };
+
+        int option_index = 0;
+
+        ret = getopt_long(m_argc, m_argv, "hdivc:", long_options, &option_index);
+
+        //Detect the end of the options
+        if(-1 == ret)
+        {
+            break;
+        }
+
+        switch(ret)
+        {
+            case 0:
+                {
+                    if(long_options[option_index].flag != 0)
+                        break;
+                    std::cout << "option " << long_options[option_index].name;
+                    if(optarg)
+                    {
+                        std::cout << "with arg " << optarg;
+                    }
+                    std::cout << std::endl;
+                    break;
+                }
+            case 'h':
+                {
+                    m_help = true;
+                    break;
+                }
+            case 'd':
+                {
+                    m_debug_log = true;
+                    break;
+                }
+            case 'i':
+                {
+                    m_info_log = true;
+                    break;
+                }
+            case 'v':
+                {
+                    m_version = true;
+                    break;
+                }
+            case 'c':
+                {
+                    m_configFile = optarg;
+                    break;
+                }
+            case '?':
+                {
+                    // getopt_long already printed an error message
+                    return false;
+                }
+            default:
+                {
+                    return false;
+                }
+        }
     }
 
     return true;
 }
 
-void GetOption::showVersion(const std::string &programName)
+void GetOption::showUsage(const std::string &programName)
 {
     std::cout << "Usage: " << programName << " [OPTION]...\n";
     std::cout << "\t -h, --help \t\t" << "show this message\n";

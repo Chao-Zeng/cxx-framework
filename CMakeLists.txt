@@ -51,6 +51,7 @@ set(LIBS pthread boost_thread boost_system boost_log boost_log_setup boost_files
 aux_source_directory(${PROJECT_SOURCE_DIR}/src SOURCES)
 aux_source_directory(${PROJECT_SOURCE_DIR}/src/log SOURCES)
 aux_source_directory(${PROJECT_SOURCE_DIR}/src/config SOURCES)
+aux_source_directory(${PROJECT_SOURCE_DIR}/src/utils SOURCES)
 
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 #set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
