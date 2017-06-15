@@ -1,6 +1,10 @@
 #include <iostream>
-#include "utils/GetOption.h"
 #include "version.h"
+#include "utils/GetOption.h"
+#include "config/config.h"
+#include "log/log.h"
+
+#include <unistd.h>
 
 int main(int argc, char* argv[])
 {
@@ -8,7 +12,7 @@ int main(int argc, char* argv[])
     if(!getOption.parseOption())
     {
         getOption.showUsage(argv[0]);
-        return -1;
+        return 1;
     }
 
     if(getOption.isShowHelp())
@@ -37,12 +41,27 @@ int main(int argc, char* argv[])
     }
 
     std::string configFile = getOption.getConfigFile();
-    if(!configFile.empty())
+    std::string defaultConfigFile = "./config/config.info";
+    if(configFile.empty())
     {
-        std::cout << "config file: " << configFile << std::endl;
-        return 0;
+        std::cout << "use default config file: " << defaultConfigFile << std::endl;
+        configFile = defaultConfigFile;
     }
-    
+
+    if(!config::Config::instance().load(configFile))
+    {
+        std::cout << "read config file " << configFile << " failed\n";
+        return 1;
+    }
+
+    logger::init_log(config::Config::instance().getLogFile());
+    LOG(info, "init log success");
+    LOG(info, "test log");
+    LOG(error, "error log");
+    LOG(fatal, "fatal log");
+
+    sleep(2); // sleep for log thread
+
     return 0;
 }
 

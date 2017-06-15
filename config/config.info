@@ -1,0 +1,4 @@
+;config file
+
+;log file
+log_file ./log/cxx_framework

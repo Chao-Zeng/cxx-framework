@@ -51,6 +51,8 @@ bool Config::load(const std::string& config_file)
     }
 
     //float v = ptree.get("a.path.to.float.value", -1.f);
+    
+    m_log_file = ptree.get("log_file", "./log/framework.log");
 
     return true;
 }
