@@ -1,10 +1,12 @@
+#include <unistd.h> // daemon
+
 #include <iostream>
+
 #include "version.h"
 #include "utils/GetOption.h"
 #include "config/config.h"
 #include "log/log.h"
 
-#include <unistd.h>
 
 int main(int argc, char* argv[])
 {
@@ -54,13 +56,22 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    //don't change working directory and redirects stdin,stdout,stderr to /dev/null
+    if(-1 == daemon(1,0))
+    {
+        std::cout << "daemonize failed\n";
+        return 1;
+    }
+
     logger::init_log(config::Config::instance().getLogFile());
+    LOG(info, "daemonized");
     LOG(info, "init log success");
+
     LOG(info, "test log");
     LOG(error, "error log");
     LOG(fatal, "fatal log");
 
-    sleep(2); // sleep for log thread
+    sleep(500);
 
     return 0;
 }

@@ -2,6 +2,18 @@ cmake_minimum_required(VERSION 2.8)
 
 project(cxx_framework)
 
+#platform check
+#include(CheckIncludeFile)
+include(CheckSymbolExists)
+#include(CheckTypeSize)
+
+#check_include_file(unistd.h HAVE_UNISTD_H)
+
+check_symbol_exists(daemon unistd.h HAVE_DAEMON)
+if(NOT HAVE_DAEMON)
+    message(FATAL_ERROR "require daemon symbol")
+endif()
+
 #version 1.0.0
 set(VERSION_MAJOR 1)
 set(VERSION_MINOR 0)
