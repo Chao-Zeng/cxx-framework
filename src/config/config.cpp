@@ -1,5 +1,7 @@
 #include "config.h"
 
+#include <stdio.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -47,14 +49,17 @@ bool Config::load(const std::string& config_file)
     }
     catch (const boost::property_tree::ptree_error &e)
     {
+        printf("read config file error, %s", e.what());
         return false;
     }
 
-    //float v = ptree.get("a.path.to.float.value", -1.f);
+    // float v = ptree.get("a.path.to.float.value", -1.f);
     
-    m_log_file = ptree.get("log_file", "./log/framework.log");
+    m_log_file = ptree.get("log_file", "log/framework.log");
+
+    m_pid_file = ptree.get("pid_file", "framework.pid");
 
     return true;
 }
 
-} //namespace config 
+} // namespace config

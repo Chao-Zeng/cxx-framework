@@ -14,6 +14,11 @@ if(NOT HAVE_DAEMON)
     message(FATAL_ERROR "require daemon symbol")
 endif()
 
+check_symbol_exists(strsignal string.h HAVE_STRSIGNAL)
+if(NOT HAVE_STRSIGNAL)
+    message(FATAL_ERROR "require strsignal symbol")
+endif()
+
 #version 1.0.0
 set(VERSION_MAJOR 1)
 set(VERSION_MINOR 0)

@@ -17,6 +17,7 @@ public:
     bool load(const std::string& config_file);
 
     std::string getLogFile() const {return m_log_file;}
+    std::string getPidFile() const {return m_pid_file;}
 
     // delete copy and move constructors and assign operators
     Config(const Config&) = delete;
@@ -31,6 +32,7 @@ private:
 private:
     std::string m_config_file;
     std::string m_log_file;
+    std::string m_pid_file;
 };
 
 }

@@ -1,4 +1,7 @@
 ;config file
 
 ;log file
-log_file ./log/cxx_framework
+log_file log/cxx_framework
+
+;pid file
+pid_file cxx_framework.pid

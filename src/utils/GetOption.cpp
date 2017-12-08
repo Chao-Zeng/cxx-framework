@@ -1,8 +1,7 @@
 #include "GetOption.h"
 
 #include <getopt.h>
-
-#include <iostream>
+#include <stdio.h>
 
 namespace util{
 
@@ -25,18 +24,19 @@ bool GetOption::parseOption()
         static struct option long_options[] =
         {
             {"help", no_argument, 0, 'h'},
-            {"debug", no_argument, 0, 'd'},
-            {"info", no_argument, 0, 'i'},
             {"version", no_argument, 0, 'v'},
+            {"daemon", no_argument, 0, 'd'},
             {"config", required_argument, 0, 'c'},
+            {"log", required_argument , 0, 'l'},
+            {"signal", required_argument , 0, 's'},
             {0, 0, 0, 0}
         };
 
         int option_index = 0;
 
-        ret = getopt_long(m_argc, m_argv, "hdivc:", long_options, &option_index);
+        ret = getopt_long(m_argc, m_argv, "hvdc:l:s:", long_options, &option_index);
 
-        //Detect the end of the options
+        // detect the end of the options
         if(-1 == ret)
         {
             break;
@@ -45,65 +45,97 @@ bool GetOption::parseOption()
         switch(ret)
         {
             case 0:
-                {
-                    if(long_options[option_index].flag != 0)
-                        break;
-                    std::cout << "option " << long_options[option_index].name;
-                    if(optarg)
-                    {
-                        std::cout << "with arg " << optarg;
-                    }
-                    std::cout << std::endl;
+                if (long_options[option_index].flag != 0)
                     break;
+                printf("option %s", long_options[option_index].name);
+                if (optarg)
+                {
+                    printf("with arg %s", optarg);
                 }
+                printf("\n");
+                break;
+
             case 'h':
-                {
-                    m_help = true;
-                    break;
-                }
+                m_help = true;
+                break;
+
             case 'd':
-                {
-                    m_debug_log = true;
-                    break;
-                }
-            case 'i':
-                {
-                    m_info_log = true;
-                    break;
-                }
+                m_daemon = true;
+                break;
+
             case 'v':
-                {
-                    m_version = true;
-                    break;
-                }
+                m_version = true;
+                break;
+
             case 'c':
+                m_configFile = optarg;
+                break;
+
+            case 'l':
+                if (getLogLevel(optarg) < 0)
                 {
-                    m_configFile = optarg;
-                    break;
+                    return false;
                 }
+                m_log_level_str = optarg;
+                m_log_level = static_cast<logger::severity_level>(getLogLevel(optarg));
+                break;
+
+            case 's':
+                m_signalName = optarg;
+                break;
+
             case '?':
-                {
-                    // getopt_long already printed an error message
-                    return false;
-                }
+                // getopt_long already printed an error message
+                return false;
+
             default:
-                {
-                    return false;
-                }
+                return false;
         }
     }
 
     return true;
 }
 
-void GetOption::showUsage(const std::string &programName)
+void GetOption::showUsage(const std::string &programName) const
 {
-    std::cout << "Usage: " << programName << " [OPTION]...\n";
-    std::cout << "\t -h, --help \t\t" << "show this message\n";
-    std::cout << "\t -d, --debug \t\t" << "change log level to debug\n";
-    std::cout << "\t -i, --info \t\t" << "change log level to info\n";
-    std::cout << "\t -v, --version \t\t" << "show version info\n";
-    std::cout << "\t -c, --config \t\t" << "set config file\n";
+    printf(
+        "Usage: %s [OPTION]...\n"
+        "  -h, --help                : show this message\n"
+        "  -d, --daemon              : daemon process\n"
+        "  -l, --log level           : change log level: debug info warn error fatal\n"
+        "  -v, --version             : show version info\n"
+        "  -c, --config filename     : set configuration file\n"
+        "  -s, --signal signal       : send signal to daemon process: stop quit\n"
+        , programName.c_str()
+        );
+}
+
+int GetOption::getLogLevel(const std::string &logLevelStr) const
+{
+    if (logLevelStr == "debug")
+    {
+        return logger::debug;
+    }
+    else if (logLevelStr == "info")
+    {
+        return logger::info;
+    }
+    else if (logLevelStr == "warn")
+    {
+        return logger::warn;
+    }
+    else if (logLevelStr == "error")
+    {
+        return logger::error;
+    }
+    else if (logLevelStr == "fatal")
+    {
+        return logger::fatal;
+    }
+    else
+    {
+        return -1;
+    }
 }
 
 } // namespace util
