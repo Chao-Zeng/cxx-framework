@@ -2,6 +2,44 @@ cmake_minimum_required(VERSION 2.8)
 
 project(cxx_framework)
 
+#third party libraries
+include(ExternalProject)
+
+#boost
+set(BOOST_ROOT ${PROJECT_SOURCE_DIR}/third_party/boost)
+#didn't search system library
+set(Boost_NO_SYSTEM_PATHS ON)
+
+set(Boost_VERSION 1.68.0)
+find_package(Boost ${Boost_VERSION})
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+    link_directories(${Boost_LIBRARY_DIRS})
+else(Boost_FOUND)
+    message(STATUS "Build boost ${Boost_VERSION}")
+    ExternalProject_Add(Boost
+        #directory options
+        PREFIX ${BOOST_ROOT}
+
+        #download options
+        URL https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
+        URL_HASH SHA256=da3411ea45622579d419bfda66f45cd0f8c32a181d84adfa936f5688388995cf
+
+        #Configure options
+        CONFIGURE_COMMAND ./bootstrap.sh --prefix=${BOOST_ROOT}
+
+        #build options
+        BUILD_COMMAND ./b2 -j8 --build-dir=./build toolset=gcc variant=release link=shared threading=multi cxxflags=-std=c++11 install
+        BUILD_IN_SOURCE TRUE
+
+        #install options
+        INSTALL_COMMAND ""
+        )
+    include_directories(${BOOST_ROOT}/include)
+    link_directories(${BOOST_ROOT}/lib)
+endif(Boost_FOUND)
+
+
 #platform check
 #include(CheckIncludeFile)
 include(CheckSymbolExists)
@@ -54,11 +92,10 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 add_definitions(-DBOOST_LOG_DYN_LINK)
 
 #Add include directories
-#include_directories(${PROJECT_SOURCE_DIR}/3rdparty/boost/boost_1_63_0/include)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
 #Add link directories
-#link_directories(${PROJECT_SOURCE_DIR}/3rdparty/boost/boost_1_63_0/lib)
+#link_directories(path/to/lib)
 
 #Add link libraries
 #attention dependence sequence, less dependence put ahead
