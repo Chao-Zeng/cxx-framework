@@ -1,16 +1,21 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(cxx_framework)
+set(TARGET_PROGRAM_NAME cxx_framework)
+
+project(${TARGET_PROGRAM_NAME})
 
 #third party libraries
 include(ExternalProject)
 
 #boost
+set(BOOST_DOWNLOAD_URL https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz)
+set(BOOST_DOWNLOAD_FILE_HASH SHA256=da3411ea45622579d419bfda66f45cd0f8c32a181d84adfa936f5688388995cf)
+set(Boost_VERSION 1.68.0)
+
 set(BOOST_ROOT ${PROJECT_SOURCE_DIR}/third_party/boost)
 #didn't search system library
 set(Boost_NO_SYSTEM_PATHS ON)
 
-set(Boost_VERSION 1.68.0)
 find_package(Boost ${Boost_VERSION})
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
@@ -22,8 +27,8 @@ else(Boost_FOUND)
         PREFIX ${BOOST_ROOT}
 
         #download options
-        URL https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
-        URL_HASH SHA256=da3411ea45622579d419bfda66f45cd0f8c32a181d84adfa936f5688388995cf
+        URL ${BOOST_DOWNLOAD_URL}
+        URL_HASH ${BOOST_DOWNLOAD_FILE_HASH}
 
         #Configure options
         CONFIGURE_COMMAND ./bootstrap.sh --prefix=${BOOST_ROOT}
@@ -111,8 +116,38 @@ aux_source_directory(${PROJECT_SOURCE_DIR}/src/utils SOURCES)
 #set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 #Add an executable
-add_executable(cxx_framework ${SOURCES})
+add_executable(${TARGET_PROGRAM_NAME} ${SOURCES})
 
 #Specify libraries or flags to use when linking a given target and/or its dependents
-target_link_libraries(cxx_framework ${LIBS})
+target_link_libraries(${TARGET_PROGRAM_NAME} ${LIBS})
+
+
+#install
+set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR})
+
+install(TARGETS ${TARGET_PROGRAM_NAME}
+    RUNTIME DESTINATION bin
+    )
+
+install(FILES
+    "${PROJECT_SOURCE_DIR}/config/config.info"
+    DESTINATION config
+    )
+
+install(FILES
+    "third_party/boost/lib/libboost_filesystem.so"
+    "third_party/boost/lib/libboost_filesystem.so.1.68.0"
+    "third_party/boost/lib/libboost_log.so"
+    "third_party/boost/lib/libboost_log.so.1.68.0"
+    "third_party/boost/lib/libboost_log_setup.so"
+    "third_party/boost/lib/libboost_log_setup.so.1.68.0"
+    "third_party/boost/lib/libboost_regex.so"
+    "third_party/boost/lib/libboost_regex.so.1.68.0"
+    "third_party/boost/lib/libboost_system.so"
+    "third_party/boost/lib/libboost_system.so.1.68.0"
+    "third_party/boost/lib/libboost_thread.so"
+    "third_party/boost/lib/libboost_thread.so.1.68.0"
+
+    DESTINATION lib
+    )
 
