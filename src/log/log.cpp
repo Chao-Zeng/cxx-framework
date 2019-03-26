@@ -143,6 +143,7 @@ static void add_file_log(const std::string& log_file_name)
             );
 
     backend->auto_flush(true);
+    backend->set_open_mode(std::ios_base::app | std::ios_base::ate);
 
     // Wrap it into the frontend and register in the core.
     typedef sinks::asynchronous_sink<
@@ -180,6 +181,7 @@ static void add_error_log(const std::string& log_file_name)
     logging::add_file_log
         (
             keywords::file_name = log_file_name + log_file_name_suffix,
+            keywords::open_mode = std::ios_base::app | std::ios_base::ate,
             keywords::rotation_size = log_file_rotation_size * 1024 * 1024,
             keywords::time_based_rotation = sinks::file::rotation_at_time_point(0, 0, 0),
             keywords::auto_flush = true,
