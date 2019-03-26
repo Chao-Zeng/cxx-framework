@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <iostream>
+#include <array>
 
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <boost/core/null_deleter.hpp>
@@ -27,8 +28,8 @@ namespace attrs = boost::log::attributes;
 
 namespace logger {
 
-static const std::string log_file_name_suffix = "_%Y%m%d%H%M%S.log";
-static const size_t log_file_rotation_size = 1 * 1024 * 1024 * 1024; /**< log file rotation size 1G */
+static std::string log_file_name_suffix;
+static size_t log_file_rotation_size; /**< log file rotation size, unit M */
 //g++ -g -DBOOST_LOG_DYN_LINK -lboost_thread -lboost_system -lboost_log -lboost_log_setup -lpthread log.cpp -o log
 static const size_t record_queue_limit = 100000;
 
@@ -137,8 +138,8 @@ static void add_file_log(const std::string& log_file_name)
     boost::shared_ptr< sinks::text_file_backend > backend =
         boost::make_shared< sinks::text_file_backend >(
             keywords::file_name = log_file_name + log_file_name_suffix,
-            keywords::rotation_size = log_file_rotation_size,
-            keywords::time_based_rotation = sinks::file::rotation_at_time_point(12, 0, 0)
+            keywords::rotation_size = log_file_rotation_size * 1024 * 1024,
+            keywords::time_based_rotation = sinks::file::rotation_at_time_point(0, 0, 0)
             );
 
     backend->auto_flush(true);
@@ -179,7 +180,7 @@ static void add_error_log(const std::string& log_file_name)
     logging::add_file_log
         (
             keywords::file_name = log_file_name + log_file_name_suffix,
-            keywords::rotation_size = log_file_rotation_size,
+            keywords::rotation_size = log_file_rotation_size * 1024 * 1024,
             keywords::time_based_rotation = sinks::file::rotation_at_time_point(0, 0, 0),
             keywords::auto_flush = true,
             keywords::filter = severity == fatal,
@@ -187,8 +188,12 @@ static void add_error_log(const std::string& log_file_name)
             );
 }
 
-void init_log(const std::string& log_file_name)
+void init_log(const std::string& log_file_name,
+              const std::string& file_name_suffix,
+              const size_t file_rotation_size)
 {
+    log_file_name_suffix = file_name_suffix;
+    log_file_rotation_size = file_rotation_size;
     logging::add_common_attributes();
     // register operator<< for severity_level
     logging::register_simple_formatter_factory< severity_level, char >("Severity");
@@ -201,18 +206,15 @@ void init_log(const std::string& log_file_name)
     set_log_level(info);
 }
 
-#define MESSAGE_BUFFER_LENGTH 4096
-
 void write_log(severity_level level, const char *format, ...)
 {
-    static char message_buffer[MESSAGE_BUFFER_LENGTH];
-    memset(message_buffer, 0, MESSAGE_BUFFER_LENGTH);
+    std::array<char, 4096> message_buffer;
     va_list args;
     va_start (args, format);
-    vsnprintf(message_buffer, MESSAGE_BUFFER_LENGTH, format, args);
+    vsnprintf(message_buffer.data(), message_buffer.size(), format, args);
     va_end(args);
 
-    LOGGER(level) << message_buffer;
+    LOGGER(level) << message_buffer.data();
 }
 
 } //namespace logger

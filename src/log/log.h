@@ -23,7 +23,9 @@ BOOST_LOG_GLOBAL_LOGGER(my_logger, boost::log::sources::severity_logger_mt< seve
 /**
  * init log module
  */
-void init_log(const std::string& log_file_name);
+void init_log(const std::string& log_file_name,
+              const std::string& file_name_suffix = "_%Y%m%d.log", /*%Y%m%d%H%M%S*/
+              const size_t file_rotation_size = 10*1024 /*unit:M, default 10G*/);
 
 /**
  * set log level
@@ -58,11 +60,13 @@ using logger::fatal;
  */
 #define LOGGER(level) BOOST_LOG_SEV(logger::my_logger::get(), level)
 
-//#define LOG_DEBUG BOOST_LOG_SEV(logger::my_logger::get(), debug) << "[" << __FILE__ << ":" << __LINE__ << "]"
-
 /**
  * c style log
  */
-#define LOG(level, format, ...) logger::write_log(level, format, ##__VA_ARGS__)
+#define LOG_DEBUG(format, ...) logger::write_log(debug, format, ##__VA_ARGS__)
+#define LOG_INFO(format, ...) logger::write_log(info, format, ##__VA_ARGS__)
+#define LOG_WARN(format, ...) logger::write_log(warn, format, ##__VA_ARGS__)
+#define LOG_ERROR(format, ...) logger::write_log(error, format, ##__VA_ARGS__)
+#define LOG_FATAL(format, ...) logger::write_log(fatal, format, ##__VA_ARGS__)
 
 #endif //_LOG_H_

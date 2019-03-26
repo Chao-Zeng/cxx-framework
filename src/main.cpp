@@ -116,21 +116,21 @@ int main(int argc, char* argv[])
     }
 
     logger::init_log(config::Config::instance().getLogFile());
-    LOG(info, "init log success");
+    LOG_INFO("init log success");
 
     if (!createPidFile(config::Config::instance().getPidFile()))
     {
-        LOG(error, "create pid file %s failed\n", config::Config::instance().getPidFile().c_str());
+        LOG_ERROR("create pid file %s failed\n", config::Config::instance().getPidFile().c_str());
         return -1;
     }
 
     // other logic
-    LOG(info, "test log");
-    LOG(error, "error log");
-    LOG(fatal, "fatal log");
+    LOG_INFO("test log");
+    LOG_ERROR("error log");
+    LOG_FATAL("fatal log");
 
     // start server ok
-    LOG(info, "server start");
+    LOG_INFO("server start");
     logger::close_console_log();
 
     // main thread wait for signal
@@ -154,25 +154,25 @@ int main(int argc, char* argv[])
         int err = sigwait(&set, &signo);
         if (err != 0)
         {
-            LOG(fatal, "sigwait failed, %d %s", err, strerror(err));
+            LOG_FATAL("sigwait failed, %d %s", err, strerror(err));
             return -1;
         }
 
         switch (signo)
         {
             case SIGQUIT:
-                LOG(info, "received %s(%d) signal, force shutdown", strsignal(signo), signo);
+                LOG_INFO("received %s(%d) signal, force shutdown", strsignal(signo), signo);
                 sleep(1);
                 return 0;
 
             case SIGINT:
             case SIGTERM:
-                LOG(info, "received %s(%d) signal, terminate gracefully", strsignal(signo), signo);
+                LOG_INFO("received %s(%d) signal, terminate gracefully", strsignal(signo), signo);
                 terminate = true;
                 break;
 
             default:
-                LOG(error, "unexpected signal %s(%d)", strsignal(signo), signo);
+                LOG_ERROR("unexpected signal %s(%d)", strsignal(signo), signo);
                 break;
         }
     }
@@ -189,7 +189,7 @@ bool createPidFile(const std::string &filename)
     std::ofstream pidFile(filename);
     if (!pidFile.good())
     {
-        LOG(error, "open file %s failed, %s\n",
+        LOG_ERROR("open file %s failed, %s\n",
             filename.c_str(), strerror(errno));
         return false;
     }

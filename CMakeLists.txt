@@ -78,7 +78,7 @@ include_directories("${PROJECT_BINARY_DIR}")
 #set(CMAKE_CXX_COMPILER "g++")
 
 #Flags for all build types
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS "-Wall -std=c++11")
 
 #Flags for Debug build
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
