@@ -20,7 +20,7 @@ bool Config::load(const std::string& config_file)
 {
     m_config_file = config_file;
 
-    std::string extension = boost::filesystem::extension(m_config_file);
+    std::string extension = boost::filesystem::extension(boost::filesystem::path(m_config_file));
 
     boost::property_tree::ptree ptree;
 

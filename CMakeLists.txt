@@ -8,9 +8,9 @@ project(${TARGET_PROGRAM_NAME})
 include(ExternalProject)
 
 #boost
-set(BOOST_DOWNLOAD_URL https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz)
-set(BOOST_DOWNLOAD_FILE_HASH SHA256=da3411ea45622579d419bfda66f45cd0f8c32a181d84adfa936f5688388995cf)
-set(Boost_VERSION 1.68.0)
+set(BOOST_DOWNLOAD_URL https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz)
+set(BOOST_DOWNLOAD_FILE_HASH SHA256=273f1be93238a068aba4f9735a4a2b003019af067b9c183ed227780b8f36062c)
+set(Boost_VERSION 1.79.0)
 
 set(BOOST_ROOT ${PROJECT_SOURCE_DIR}/third_party/boost)
 #didn't search system library
@@ -136,17 +136,17 @@ install(FILES
 
 install(FILES
     "third_party/boost/lib/libboost_filesystem.so"
-    "third_party/boost/lib/libboost_filesystem.so.1.68.0"
+    "third_party/boost/lib/libboost_filesystem.so.1.79.0"
     "third_party/boost/lib/libboost_log.so"
-    "third_party/boost/lib/libboost_log.so.1.68.0"
+    "third_party/boost/lib/libboost_log.so.1.79.0"
     "third_party/boost/lib/libboost_log_setup.so"
-    "third_party/boost/lib/libboost_log_setup.so.1.68.0"
+    "third_party/boost/lib/libboost_log_setup.so.1.79.0"
     "third_party/boost/lib/libboost_regex.so"
-    "third_party/boost/lib/libboost_regex.so.1.68.0"
+    "third_party/boost/lib/libboost_regex.so.1.79.0"
     "third_party/boost/lib/libboost_system.so"
-    "third_party/boost/lib/libboost_system.so.1.68.0"
+    "third_party/boost/lib/libboost_system.so.1.79.0"
     "third_party/boost/lib/libboost_thread.so"
-    "third_party/boost/lib/libboost_thread.so.1.68.0"
+    "third_party/boost/lib/libboost_thread.so.1.79.0"
 
     DESTINATION lib
     )
