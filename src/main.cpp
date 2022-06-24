@@ -13,6 +13,7 @@
 #include "utils/GetOption.h"
 #include "config/config.h"
 #include "log/log.h"
+#include "server/Server.h"
 
 #define PROGRAM_NAME "cxx_framework"
 
@@ -30,6 +31,8 @@ std::vector<signal_t> g_signals = {
 
 static bool createPidFile(const std::string &filename);
 static int sendSignalToDaemon(int signo);
+static int blockSignal();
+static void runSignalLoop(bool isDaemon);
 
 int main(int argc, char* argv[])
 {
@@ -98,25 +101,14 @@ int main(int argc, char* argv[])
         }
     }
 
-    // block signal for all threads
-    sigset_t set;
-    sigfillset(&set);
-
-    // if SIGBUS, SIGFPE, SIGILL, or SIGSEGV are generated while they are blocked,
-    // the result is undefined
-    sigdelset(&set, SIGILL);
-    sigdelset(&set, SIGFPE);
-    sigdelset(&set, SIGSEGV);
-    sigdelset(&set, SIGBUS);
-
-    if (pthread_sigmask(SIG_BLOCK, &set, NULL) != 0)
-    {
-        printf("pthread_sigmask() failed \n");
-        return -1;
-    }
+    // if (0 != blockSignal())
+    // {
+    //     return -1;
+    // }
 
     logger::init_log(config::Config::instance().getLogFile());
     LOG_INFO("init log success");
+    //logger::set_log_level(trace);
 
     if (!createPidFile(config::Config::instance().getPidFile()))
     {
@@ -124,58 +116,16 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    // other logic
-    LOG_INFO("test log");
-    LOG_ERROR("error log");
-    LOG_FATAL("fatal log");
-
     // start server ok
-    LOG_INFO("server start");
+    LOG_INFO("close console log");
     logger::close_console_log();
 
     // main thread wait for signal
-    bool terminate = false;
-    for (;;)
-    {
-        if (terminate)
-        {
-            break;
-        }
-
-        // wait for signal: SIGQUIT SIGTERM
-        int signo;
-        sigemptyset(&set);
-        sigaddset(&set, SIGQUIT);
-        sigaddset(&set, SIGTERM);
-        if (!getOption.isDaemon())
-        {
-            sigaddset(&set, SIGINT);
-        }
-        int err = sigwait(&set, &signo);
-        if (err != 0)
-        {
-            LOG_FATAL("sigwait failed, %d %s", err, strerror(err));
-            return -1;
-        }
-
-        switch (signo)
-        {
-            case SIGQUIT:
-                LOG_INFO("received %s(%d) signal, force shutdown", strsignal(signo), signo);
-                sleep(1);
-                return 0;
-
-            case SIGINT:
-            case SIGTERM:
-                LOG_INFO("received %s(%d) signal, terminate gracefully", strsignal(signo), signo);
-                terminate = true;
-                break;
-
-            default:
-                LOG_ERROR("unexpected signal %s(%d)", strsignal(signo), signo);
-                break;
-        }
-    }
+    //runSignalLoop(getOption.isDaemon());
+    LOG_INFO("start server");
+    server::Server server("0.0.0.0", "10000");
+    server.Run();
+    LOG_INFO("server stopped");
 
     // program exit cleanup
 
@@ -219,4 +169,73 @@ int sendSignalToDaemon(int signo)
     printf("send %s(%d) signal to process %d failed \n",
             strsignal(signo), signo, pid);
     return -1;
+}
+
+int blockSignal()
+{
+    // block signal for all threads
+    sigset_t set;
+    sigfillset(&set);
+
+    // if SIGBUS, SIGFPE, SIGILL, or SIGSEGV are generated while they are blocked,
+    // the result is undefined
+    sigdelset(&set, SIGILL);
+    sigdelset(&set, SIGFPE);
+    sigdelset(&set, SIGSEGV);
+    sigdelset(&set, SIGBUS);
+
+    if (pthread_sigmask(SIG_BLOCK, &set, NULL) != 0)
+    {
+        printf("pthread_sigmask() failed \n");
+        return -1;
+    }
+
+    return 0;
+}
+
+void runSignalLoop(bool isDaemon)
+{
+    bool terminate = false;
+    for (;;)
+    {
+        if (terminate)
+        {
+            break;
+        }
+
+        // wait for signal: SIGQUIT SIGTERM
+        int signo;
+        sigset_t set;
+        sigemptyset(&set);
+        sigaddset(&set, SIGQUIT);
+        sigaddset(&set, SIGTERM);
+        if (!isDaemon)
+        {
+            sigaddset(&set, SIGINT);
+        }
+        int err = sigwait(&set, &signo);
+        if (err != 0)
+        {
+            LOG_FATAL("sigwait failed, %d %s", err, strerror(err));
+            return;
+        }
+
+        switch (signo)
+        {
+            case SIGQUIT:
+                LOG_INFO("received %s(%d) signal, force shutdown", strsignal(signo), signo);
+                sleep(1);//wait for write log file
+                return;
+
+            case SIGINT:
+            case SIGTERM:
+                LOG_INFO("received %s(%d) signal, terminate gracefully", strsignal(signo), signo);
+                terminate = true;
+                break;
+
+            default:
+                LOG_ERROR("unexpected signal %s(%d)", strsignal(signo), signo);
+                break;
+        }
+    }
 }

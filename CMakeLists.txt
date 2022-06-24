@@ -20,6 +20,7 @@ find_package(Boost ${Boost_VERSION})
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
     link_directories(${Boost_LIBRARY_DIRS})
+    message(STATUS "link dir ${Boost_LIBRARY_DIRS}")
 else(Boost_FOUND)
     message(STATUS "Build boost ${Boost_VERSION}")
     ExternalProject_Add(Boost
@@ -34,7 +35,7 @@ else(Boost_FOUND)
         CONFIGURE_COMMAND ./bootstrap.sh --prefix=${BOOST_ROOT}
 
         #build options
-        BUILD_COMMAND ./b2 -j8 --build-dir=./build toolset=gcc variant=release link=shared threading=multi cxxflags=-std=c++11 install
+        BUILD_COMMAND ./b2 -j8 --build-dir=./build toolset=gcc variant=release link=shared threading=multi cxxflags=-std=c++17 install
         BUILD_IN_SOURCE TRUE
 
         #install options
@@ -78,7 +79,7 @@ include_directories("${PROJECT_BINARY_DIR}")
 #set(CMAKE_CXX_COMPILER "g++")
 
 #Flags for all build types
-set(CMAKE_CXX_FLAGS "-Wall -std=c++11")
+set(CMAKE_CXX_FLAGS "-Wall -std=c++17")
 
 #Flags for Debug build
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
@@ -108,8 +109,11 @@ set(LIBS pthread boost_thread boost_system boost_log boost_log_setup boost_files
 
 #Add source file directories
 aux_source_directory(${PROJECT_SOURCE_DIR}/src SOURCES)
-aux_source_directory(${PROJECT_SOURCE_DIR}/src/log SOURCES)
 aux_source_directory(${PROJECT_SOURCE_DIR}/src/config SOURCES)
+aux_source_directory(${PROJECT_SOURCE_DIR}/src/log SOURCES)
+aux_source_directory(${PROJECT_SOURCE_DIR}/src/network SOURCES)
+aux_source_directory(${PROJECT_SOURCE_DIR}/src/network/protocol SOURCES)
+aux_source_directory(${PROJECT_SOURCE_DIR}/src/server SOURCES)
 aux_source_directory(${PROJECT_SOURCE_DIR}/src/utils SOURCES)
 
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)

@@ -11,6 +11,7 @@ namespace logger {
  */
 enum severity_level
 {
+    trace,
     debug,
     info,
     warn,
@@ -45,10 +46,11 @@ void close_console_log();
 /**
  * write log, client should not use this function
  */
-void write_log(severity_level level, const char *format, ...);
+void write_log(severity_level level, const char *file, int line, const char *format, ...);
 
 } //namespace logger 
 
+using logger::trace;
 using logger::debug;
 using logger::info;
 using logger::warn;
@@ -63,10 +65,11 @@ using logger::fatal;
 /**
  * c style log
  */
-#define LOG_DEBUG(format, ...) logger::write_log(debug, format, ##__VA_ARGS__)
-#define LOG_INFO(format, ...) logger::write_log(info, format, ##__VA_ARGS__)
-#define LOG_WARN(format, ...) logger::write_log(warn, format, ##__VA_ARGS__)
-#define LOG_ERROR(format, ...) logger::write_log(error, format, ##__VA_ARGS__)
-#define LOG_FATAL(format, ...) logger::write_log(fatal, format, ##__VA_ARGS__)
+#define LOG_TRACE(format, ...) logger::write_log(trace, __FILE__, __LINE__, format, ##__VA_ARGS__)
+#define LOG_DEBUG(format, ...) logger::write_log(debug, __FILE__, __LINE__, format, ##__VA_ARGS__)
+#define LOG_INFO(format, ...) logger::write_log(info, __FILE__, __LINE__, format, ##__VA_ARGS__)
+#define LOG_WARN(format, ...) logger::write_log(warn, __FILE__, __LINE__, format, ##__VA_ARGS__)
+#define LOG_ERROR(format, ...) logger::write_log(error, __FILE__, __LINE__, format, ##__VA_ARGS__)
+#define LOG_FATAL(format, ...) logger::write_log(fatal, __FILE__, __LINE__, format, ##__VA_ARGS__)
 
 #endif //_LOG_H_

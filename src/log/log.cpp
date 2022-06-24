@@ -59,6 +59,7 @@ inline std::basic_ostream< CharT, TraitsT >& operator<< (
 {
     static const char* const str[] =
     {
+        "trace",
         "debug",
         "info",
         "warn",
@@ -166,8 +167,8 @@ static void add_file_log(const std::string& log_file_name)
             % expr::smessage
             );
 
-    // debug <= level < critical
-    sink->set_filter(expr::is_in_range(severity, debug, fatal));
+    // trace <= level < fatal
+    sink->set_filter(expr::is_in_range(severity, trace, fatal));
 
     boost::shared_ptr< logging::core > core = logging::core::get();
     core->add_sink(sink);
@@ -208,7 +209,7 @@ void init_log(const std::string& log_file_name,
     set_log_level(info);
 }
 
-void write_log(severity_level level, const char *format, ...)
+void write_log(severity_level level, const char *file, int line, const char *format, ...)
 {
     std::array<char, 4096> message_buffer;
     va_list args;
@@ -216,7 +217,8 @@ void write_log(severity_level level, const char *format, ...)
     vsnprintf(message_buffer.data(), message_buffer.size(), format, args);
     va_end(args);
 
-    LOGGER(level) << message_buffer.data();
+    boost::filesystem::path p(file);
+    LOGGER(level) << p.filename().c_str() << ":" << line << " " << message_buffer.data();
 }
 
 } //namespace logger
