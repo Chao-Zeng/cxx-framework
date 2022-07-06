@@ -5,3 +5,10 @@ log_file log/cxx_framework
 
 ;pid file
 pid_file cxx_framework.pid
+
+;server
+server
+{
+    ip "0.0.0.0" ;server listen ip
+    port "10000" ;server listen port
+}

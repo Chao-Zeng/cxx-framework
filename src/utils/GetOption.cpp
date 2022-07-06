@@ -102,7 +102,7 @@ void GetOption::showUsage(const std::string &programName) const
         "Usage: %s [OPTION]...\n"
         "  -h, --help                : show this message\n"
         "  -d, --daemon              : daemon process\n"
-        "  -l, --log level           : change log level: debug info warn error fatal\n"
+        "  -l, --log level           : change log level: trace debug info warn error fatal\n"
         "  -v, --version             : show version info\n"
         "  -c, --config filename     : set configuration file\n"
         "  -s, --signal signal       : send signal to daemon process: stop quit\n"
@@ -112,7 +112,11 @@ void GetOption::showUsage(const std::string &programName) const
 
 int GetOption::getLogLevel(const std::string &logLevelStr) const
 {
-    if (logLevelStr == "debug")
+    if (logLevelStr == "trace")
+    {
+        return logger::trace;
+    }
+    else if (logLevelStr == "debug")
     {
         return logger::debug;
     }

@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
     if(getOption.isChangeLogLevel())
     {
         printf("set log level to %s \n", getOption.getLogLevelStr().c_str());
-        return 0;
+        //return 0;
     }
 
     std::string configFile = getOption.getConfigFile();
@@ -106,9 +106,9 @@ int main(int argc, char* argv[])
     //     return -1;
     // }
 
-    logger::init_log(config::Config::instance().getLogFile());
+    logger::init_log(config::Config::instance().getLogFile(),
+                     getOption.getLogLevel());
     LOG_INFO("init log success");
-    //logger::set_log_level(trace);
 
     if (!createPidFile(config::Config::instance().getPidFile()))
     {
@@ -116,14 +116,14 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    // start server ok
     LOG_INFO("close console log");
     logger::close_console_log();
 
     // main thread wait for signal
     //runSignalLoop(getOption.isDaemon());
     LOG_INFO("start server");
-    server::Server server("0.0.0.0", "10000");
+    server::Server server(config::Config::instance().getServerIp(),
+                          config::Config::instance().getServerPort());
     server.Run();
     LOG_INFO("server stopped");
 

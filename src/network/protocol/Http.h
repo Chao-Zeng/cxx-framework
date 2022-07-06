@@ -11,6 +11,8 @@
 #include "log/log.h"
 #include "Protocol.h"
 #include "network/Connection.h"
+#include "utils/TemplateHelper.h"
+
 
 namespace network {
 namespace protocol {
@@ -69,30 +71,135 @@ class Response
 public:
     enum class StatusCode
     {
-        OK = 200,
-        CREATED = 201,
-        ACCEPTED = 202,
-        NO_CONTENT = 204,
-        MULTIPLE_CHOICES = 300,
-        MOVED_PERMANENTLY = 301,
-        MOVED_TEMPORARILY = 302,
-        NOT_MODIFIED = 304,
-        BAD_REQUEST = 400,
-        UNAUTHORIZED = 401,
-        FORBIDDEN = 403,
-        NOT_FOUND = 404,
-        INTERNAL_SERVER_ERROR = 500,
-        NOT_IMPLEMENTED = 501,
-        BAD_GATEWAY = 502,
-        SERVICE_UNAVAILABLE = 503
+        /* 1xx: Informational - Request received, continuing process */
+        Continue                        = 100,
+        SwitchingProtocols              = 101,
+        /* 2xx: Success - The action was successfully received, understood, and accepted */
+        OK                              = 200,
+        Created                         = 201,
+        Accepted                        = 202,
+        NonAuthoritativeInformation     = 203,
+        NoContent                       = 204,
+        ResetContent                    = 205,
+        PartialContent                  = 206,
+        /* 3xx: Redirection - Further action must be taken in order to complete the request */
+        MultipleChoices                 = 300,
+        MovedPermanently                = 301,
+        Found                           = 302,
+        SeeOther                        = 303,
+        NotModified                     = 304,
+        UseProxy                        = 305,
+        TemporaryRedirect               = 307,
+        /* 4xx: Client Error - The request contains bad syntax or cannot be fulfilled */
+        BadRequest                      = 400,
+        Unauthorized                    = 401,
+        PaymentRequired                 = 402,
+        Forbidden                       = 403,
+        NotFound                        = 404,
+        MethodNotAllowed                = 405,
+        NotAcceptable                   = 406,
+        ProxyAuthenticationRequired     = 407,
+        RequestTimeout                  = 408,
+        Conflict                        = 409,
+        Gone                            = 410,
+        LengthRequired                  = 411,
+        PreconditionFailed              = 412,
+        RequestEntityTooLarge           = 413,
+        RequestURITooLarge              = 414,
+        UnsupportedMediaType            = 415,
+        RequestedRangeNotSatisfiable    = 416,
+        ExpectationFailed               = 417,
+        /* 5xx: Server Error - The server failed to fulfill an apparently valid request */
+        InternalServerError             = 500,
+        NotImplemented                  = 501,
+        BadGateway                      = 502,
+        ServiceUnavailable              = 503,
+        GatewayTimeout                  = 504,
+        HTTPVersionNotSupported         = 505
     };
+
+    static std::string GetReasonPhrase(const StatusCode& status_code)
+    {
+        static const std::unordered_map<
+                        StatusCode, std::string, util::EnumClassHash> status_reason_map = {
+            {StatusCode::Continue                     ,"Continue"},
+            {StatusCode::SwitchingProtocols           ,"Switching Protocols"},
+            {StatusCode::OK                           ,"OK"},
+            {StatusCode::Created                      ,"Created"},
+            {StatusCode::Accepted                     ,"Accepted"},
+            {StatusCode::NonAuthoritativeInformation  ,"Non-Authoritative Information"},
+            {StatusCode::NoContent                    ,"No Content"},
+            {StatusCode::ResetContent                 ,"Reset Content"},
+            {StatusCode::PartialContent               ,"Partial Content"},
+            {StatusCode::MultipleChoices              ,"Multiple Choices"},
+            {StatusCode::MovedPermanently             ,"Moved Permanently"},
+            {StatusCode::Found                        ,"Found"},
+            {StatusCode::SeeOther                     ,"See Other"},
+            {StatusCode::NotModified                  ,"Not Modified"},
+            {StatusCode::UseProxy                     ,"Use Proxy"},
+            {StatusCode::TemporaryRedirect            ,"Temporary Redirect"},
+            {StatusCode::BadRequest                   ,"Bad Request"},
+            {StatusCode::Unauthorized                 ,"Unauthorized"},
+            {StatusCode::PaymentRequired              ,"Payment Required"},
+            {StatusCode::Forbidden                    ,"Forbidden"},
+            {StatusCode::NotFound                     ,"Not Found"},
+            {StatusCode::MethodNotAllowed             ,"Method Not Allowed"},
+            {StatusCode::NotAcceptable                ,"Not Acceptable"},
+            {StatusCode::ProxyAuthenticationRequired  ,"Proxy Authentication Required"},
+            {StatusCode::RequestTimeout               ,"Request Time-out"},
+            {StatusCode::Conflict                     ,"Conflict"},
+            {StatusCode::Gone                         ,"Gone"},
+            {StatusCode::LengthRequired               ,"Length Required"},
+            {StatusCode::PreconditionFailed           ,"Precondition Failed"},
+            {StatusCode::RequestEntityTooLarge        ,"Request Entity Too Large"},
+            {StatusCode::RequestURITooLarge           ,"Request-URI Too Large"},
+            {StatusCode::UnsupportedMediaType         ,"Unsupported Media Type"},
+            {StatusCode::RequestedRangeNotSatisfiable ,"Requested range not satisfiable"},
+            {StatusCode::ExpectationFailed            ,"Expectation Failed"},
+            {StatusCode::InternalServerError          ,"Internal Server Error"},
+            {StatusCode::NotImplemented               ,"Not Implemented"},
+            {StatusCode::BadGateway                   ,"Bad Gateway"},
+            {StatusCode::ServiceUnavailable           ,"Service Unavailable"},
+            {StatusCode::GatewayTimeout               ,"Gateway Time-out"},
+            {StatusCode::HTTPVersionNotSupported      ,"HTTP Version not supported"}
+        };
+
+        const auto& it = status_reason_map.find(status_code);
+        if (it != status_reason_map.end())
+        {
+            return it->second;
+        }
+
+        return "";
+    }
+
+    std::string to_string()
+    {
+        std::stringstream ss;
+        ss << "HTTP/1.1" << " " << static_cast<int>(status_code) << " " << GetReasonPhrase(status_code);
+        for (const auto &header : headers)
+        {
+            ss << header.first << ":" << header.second << " ";
+        }
+        ss << body;
+        return ss.str();
+    }
 
     StatusCode status_code;
     Headers headers;
     std::string body;
 };
 
-class Http : public Protocol<Request, Response>
+class Handler
+{
+public:
+    void handle(const Request& request, Response& response)
+    {
+        response.status_code = Response::StatusCode::OK;
+    }
+};
+
+class Http : public Protocol<Request, Response, Handler>
 {
 public:
     Http()
@@ -144,6 +251,32 @@ public:
         }
 
         return std::make_tuple(ParseResult::BAD, 0);
+    }
+
+    bool Serialize(const Response &response, boost::asio::streambuf &streambuf) override
+    {
+        std::ostream os(&streambuf);
+        // Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
+        os << "HTTP/1.1" << " " << static_cast<std::underlying_type_t<Response::StatusCode>>(response.status_code)
+           << " " << Response::GetReasonPhrase(response.status_code) << CRLF;
+
+        // Headers
+        for (const auto& header : response.headers)
+        {
+            os << header.first << ":" << header.second << CRLF;
+        }
+
+        auto content_length_header = ifind_header(response.headers, "Content-Length");
+        if (!content_length_header)
+        {
+            os << "Content-Length" << ":" << std::to_string(response.body.size()) << CRLF;
+        }
+
+        os << CRLF;
+
+        // body
+        os << response.body;
+        return true;
     }
 
 private:

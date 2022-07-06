@@ -58,6 +58,8 @@ bool Config::load(const std::string& config_file)
     m_log_file = ptree.get("log_file", "log/framework.log");
 
     m_pid_file = ptree.get("pid_file", "framework.pid");
+    m_server_ip = ptree.get("server.ip", "0.0.0.0");
+    m_server_port = ptree.get("server.port", "10000");
 
     return true;
 }

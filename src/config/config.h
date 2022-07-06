@@ -18,6 +18,8 @@ public:
 
     std::string getLogFile() const {return m_log_file;}
     std::string getPidFile() const {return m_pid_file;}
+    std::string getServerIp() const {return m_server_ip;}
+    std::string getServerPort() const {return m_server_port;}
 
     // delete copy and move constructors and assign operators
     Config(const Config&) = delete;
@@ -33,6 +35,8 @@ private:
     std::string m_config_file;
     std::string m_log_file;
     std::string m_pid_file;
+    std::string m_server_ip;
+    std::string m_server_port;
 };
 
 }

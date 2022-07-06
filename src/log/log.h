@@ -25,6 +25,7 @@ BOOST_LOG_GLOBAL_LOGGER(my_logger, boost::log::sources::severity_logger_mt< seve
  * init log module
  */
 void init_log(const std::string& log_file_name,
+              const severity_level log_level = info,
               const std::string& file_name_suffix = "_%Y%m%d.log", /*%Y%m%d%H%M%S*/
               const size_t file_rotation_size = 10*1024 /*unit:M, default 10G*/);
 

@@ -192,6 +192,7 @@ static void add_error_log(const std::string& log_file_name)
 }
 
 void init_log(const std::string& log_file_name,
+              const severity_level log_level,
               const std::string& file_name_suffix,
               const size_t file_rotation_size)
 {
@@ -206,7 +207,7 @@ void init_log(const std::string& log_file_name,
     boost::filesystem::path p(log_file_name);
     std::string error_log_file = (p.parent_path()/="error").string();
     add_error_log(error_log_file);
-    set_log_level(info);
+    set_log_level(log_level);
 }
 
 void write_log(severity_level level, const char *file, int line, const char *format, ...)

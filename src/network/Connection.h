@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <list>
 
 #include <boost/asio.hpp>
 
@@ -16,7 +17,7 @@ class Connection : public std::enable_shared_from_this<Connection<Protocol>>
 public:
     using RequestType = typename Protocol::RequestType;
     using ResponseType = typename Protocol::ResponseType;
-    //using HandlerType = typename Protocol::HandlerType;
+    using HandlerType = typename Protocol::HandlerType;
     using ParseResultType = typename Protocol::ParseResult;
 
     using Ptr = std::shared_ptr<Connection>;
@@ -38,6 +39,16 @@ public:
     void Stop()
     {
         socket_.close();
+    }
+
+    boost::asio::any_io_executor GetExecutor()
+    {
+        return socket_.get_executor();
+    }
+
+    boost::asio::ip::tcp::socket& GetSocket()
+    {
+        return socket_;
     }
 
 private:
@@ -70,8 +81,25 @@ private:
                         }
                         else if (parse_result == ParseResultType::GOOD)
                         {
-                            LOG_DEBUG("receive request %s", request_.to_string().c_str());
-                            //handler_.handle(request_);
+                            LOG_INFO("receive request %s", request_.to_string().c_str());
+                            ResponseType response;
+                            handler_.handle(request_, response);
+                            Item item;
+                            protocol_.Serialize(response, *item.streambuf);
+                            item.response = std::move(response);
+
+                            // print serialize result
+                            auto buf = item.streambuf->data();
+                            const char* ptr = boost::asio::buffer_cast<const char*>(buf);
+                            std::string str(ptr, buf.size());
+                            LOG_TRACE("serialize to %s", str.c_str());
+
+                            bool write_in_progress = !output_queue_.empty();
+                            output_queue_.push_back(std::move(item));
+                            if (!write_in_progress)
+                            {
+                                DoWrite();
+                            }
                         }
                         else if (parse_result == ParseResultType::NEED_MORE)
                         {
@@ -88,14 +116,45 @@ private:
                 }
             });
     }
-    void DoWrite();
+
+    void DoWrite()
+    {
+        auto self = this->shared_from_this();
+        const Item& item = output_queue_.front();
+        boost::asio::async_write(socket_, *item.streambuf,
+            [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
+            {
+                if (!ec)
+                {
+                    LOG_INFO("send response %s", output_queue_.front().response.to_string().c_str());
+                    output_queue_.pop_front();
+                    if (!output_queue_.empty())
+                    {
+                        DoWrite();
+                    }
+                }
+                else
+                {
+                    LOG_ERROR("%s write socket data error %s",
+                        socket_.remote_endpoint().address().to_string().c_str(), ec.message().c_str());
+                    connection_manager_.Stop(this->shared_from_this());
+                }
+            });
+    }
+
+    struct Item
+    {
+        ResponseType response;
+        std::shared_ptr<boost::asio::streambuf> streambuf = std::make_shared<boost::asio::streambuf>();
+    };
 
     boost::asio::ip::tcp::socket socket_;
     ConnectionManager<Connection>& connection_manager_;
     std::vector<char> buff_;
     Protocol protocol_;
     RequestType request_;
-    //HandlerType handler_;
+    HandlerType handler_;
+    std::list<Item> output_queue_;
 };
 
 } // namespace network
