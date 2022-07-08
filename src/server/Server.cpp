@@ -3,6 +3,7 @@
 #include <signal.h>
 
 #include <thread>
+#include <sstream>
 
 #include "log/log.h"
 
@@ -22,12 +23,14 @@ Server::Server(const std::string& address, const std::string &port)
     acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
     acceptor_.bind(endpoint);
     acceptor_.listen();
+    LOG_INFO("listen on %s:%s", address.c_str(), port.c_str());
 
     Accept();
 }
 
 void Server::Run()
 {
+    LOG_INFO("run io context pool");
     io_context_pool_.Run();
 }
 
@@ -43,7 +46,9 @@ void Server::RegisterSignalHandler()
             // operations. Once all operations have finished the io_context::run()
             // call will exit.
             acceptor_.close();
+            LOG_INFO("stop accept");
             io_context_pool_.Stop();
+            LOG_INFO("stop io context pool");
         }
     );
 }
@@ -62,7 +67,9 @@ void Server::Accept()
 
             if (!ec)
             {
-                LOG_INFO("accept connection %d", socket.remote_endpoint().address().to_string().c_str());
+                std::ostringstream ss;
+                ss << socket.remote_endpoint();
+                LOG_INFO("accept connection %s", ss.str().c_str());
                 auto connection = std::make_shared<network::Connection<ProtocolType>>(std::move(socket), connection_manager_);
                 connection_manager_.Start(connection);
             }
@@ -76,4 +83,4 @@ void Server::Accept()
     );
 }
 
-}
+} // namespace server

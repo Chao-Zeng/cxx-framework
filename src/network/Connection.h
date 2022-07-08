@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <list>
+#include <sstream>
 
 #include <boost/asio.hpp>
 
@@ -51,17 +52,24 @@ public:
         return socket_;
     }
 
+    std::string GetPeerAddress() const
+    {
+        std::ostringstream ss;
+        ss << socket_.remote_endpoint();
+        return ss.str();
+    }
+
 private:
     void DoRead()
     {
         auto buffer_view = boost::asio::dynamic_buffer(buff_);
         constexpr std::size_t max_buff_size = 8192;
 
-        auto self = this->shared_from_this();
+        auto self(this->shared_from_this());
         socket_.async_read_some(buffer_view.prepare(max_buff_size),
             [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
             {
-                LOG_TRACE("%s receive %lu bytes", socket_.remote_endpoint().address().to_string().c_str(), bytes_transferred);
+                LOG_TRACE("%s receive %lu bytes", GetPeerAddress().c_str(), bytes_transferred);
                 if (!ec)
                 {
                     // process all received request
@@ -69,7 +77,8 @@ private:
                     {
                         ParseResultType parse_result = ParseResultType::BAD;
                         std::size_t used_bytes = 0;
-                        std::tie(parse_result, used_bytes) = protocol_.Parse(request_, buff_.data(), buff_.size());
+                        std::tie(parse_result, used_bytes) =
+                            protocol_.Parse(request_, buff_.data(), buff_.size());
                         auto buffer_view = boost::asio::dynamic_buffer(buff_);
                         buffer_view.consume(used_bytes);
                         
@@ -111,7 +120,15 @@ private:
                 }
                 else if (ec != boost::asio::error::operation_aborted)
                 {
-                    LOG_ERROR("read socket error %s", ec.message().c_str());
+                    if (ec == boost::asio::error::eof)
+                    {
+                        LOG_INFO("peer %s close connection", GetPeerAddress().c_str());
+                    }
+                    else
+                    {
+                        LOG_ERROR("read socket error %s", ec.message().c_str());
+                    }
+
                     connection_manager_.Stop(this->shared_from_this());
                 }
             });
@@ -119,7 +136,7 @@ private:
 
     void DoWrite()
     {
-        auto self = this->shared_from_this();
+        auto self(this->shared_from_this());
         const Item& item = output_queue_.front();
         boost::asio::async_write(socket_, *item.streambuf,
             [this, self](boost::system::error_code ec, std::size_t bytes_transferred)
@@ -136,7 +153,7 @@ private:
                 else
                 {
                     LOG_ERROR("%s write socket data error %s",
-                        socket_.remote_endpoint().address().to_string().c_str(), ec.message().c_str());
+                        GetPeerAddress().c_str(), ec.message().c_str());
                     connection_manager_.Stop(this->shared_from_this());
                 }
             });
@@ -150,7 +167,7 @@ private:
 
     boost::asio::ip::tcp::socket socket_;
     ConnectionManager<Connection>& connection_manager_;
-    std::vector<char> buff_;
+    std::vector<char> buff_; // input data buffer
     Protocol protocol_;
     RequestType request_;
     HandlerType handler_;

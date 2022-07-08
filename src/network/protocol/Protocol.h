@@ -22,7 +22,7 @@ public:
     virtual std::tuple<ParseResult, std::size_t>
     Parse(RequestType &request, const char *data, std::size_t size) = 0;
 
-    virtual bool Serialize(const Response &response, boost::asio::streambuf &streambuf) = 0;
+    virtual void Serialize(const Response &response, boost::asio::streambuf &streambuf) = 0;
 
 protected:
     virtual ~Protocol(){}

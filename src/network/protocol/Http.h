@@ -10,7 +10,6 @@
 
 #include "log/log.h"
 #include "Protocol.h"
-#include "network/Connection.h"
 #include "utils/TemplateHelper.h"
 
 
@@ -193,7 +192,7 @@ public:
 class Handler
 {
 public:
-    void handle(const Request& request, Response& response)
+    virtual void handle(const Request& request, Response& response) noexcept
     {
         response.status_code = Response::StatusCode::OK;
     }
@@ -253,7 +252,7 @@ public:
         return std::make_tuple(ParseResult::BAD, 0);
     }
 
-    bool Serialize(const Response &response, boost::asio::streambuf &streambuf) override
+    void Serialize(const Response &response, boost::asio::streambuf &streambuf) override
     {
         std::ostream os(&streambuf);
         // Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
@@ -276,7 +275,6 @@ public:
 
         // body
         os << response.body;
-        return true;
     }
 
 private:

@@ -122,9 +122,20 @@ int main(int argc, char* argv[])
     // main thread wait for signal
     //runSignalLoop(getOption.isDaemon());
     LOG_INFO("start server");
-    server::Server server(config::Config::instance().getServerIp(),
+    try
+    {
+        server::Server server(config::Config::instance().getServerIp(),
                           config::Config::instance().getServerPort());
-    server.Run();
+        server.Run();
+    }
+    catch(const std::exception& e)
+    {
+        LOG_ERROR("uncatched exception %s", e.what());
+    }
+    catch(...)
+    {
+        LOG_ERROR("uncatched unknown exception");
+    }
     LOG_INFO("server stopped");
 
     // program exit cleanup
